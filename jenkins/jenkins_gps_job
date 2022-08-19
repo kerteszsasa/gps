@@ -57,7 +57,7 @@ pipeline {
 				]
 			recordIssues tool: cpd(pattern: '**/cpd/xml/cpd.xml'),
 				qualityGates: [
-					[threshold: 29, type: 'TOTAL_HIGH', unstable: true],
+					[threshold: 40, type: 'TOTAL_HIGH', unstable: true],
 					[threshold: 196, type: 'TOTAL_NORMAL', unstable: true],
 					[threshold: 477, type: 'TOTAL_LOW', unstable: true]
 				]
