@@ -52,7 +52,7 @@ pipeline {
 			recordIssues tool: spotBugs(pattern: '**/target/spotbugsXml.xml'),
 				qualityGates: [
 					[threshold: 2, type: 'TOTAL_HIGH', unstable: true],
-					[threshold: 323557, type: 'TOTAL_NORMAL', unstable: true],
+					[threshold: 3237, type: 'TOTAL_NORMAL', unstable: true],
 					[threshold: 1, type: 'TOTAL_LOW', unstable: true]
 				]
 			recordIssues tool: cpd(pattern: '**/cpd/xml/cpd.xml'),
