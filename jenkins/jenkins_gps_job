@@ -47,7 +47,7 @@ pipeline {
 				qualityGates: [
 					[threshold: 1, type: 'TOTAL_HIGH', unstable: true],
 					[threshold: 23, type: 'TOTAL_NORMAL', unstable: true],
-					[threshold: 1, type: 'TOTAL_LOW', unstable: true]
+					[threshold: 15, type: 'TOTAL_LOW', unstable: true]
 				]
 			recordIssues tool: spotBugs(pattern: '**/target/spotbugsXml.xml'),
 				qualityGates: [
