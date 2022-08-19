@@ -1,0 +1,97 @@
+pipeline {
+	agent { label 'java && sibrik' }
+	options {
+		timeout(time: 40, unit: 'MINUTES')
+		buildDiscarder(logRotator(daysToKeepStr: '180', artifactNumToKeepStr: '30', artifactDaysToKeepStr: '7'))
+		copyArtifactPermission('/Client-test/*');
+		timestamps()
+	}
+	stages {
+		stage('Checkout') {
+			steps {
+				checkout scm
+			}
+		}
+
+		stage('Compile, Spotbugs') {
+			steps {
+				withMaven(
+					maven: 'Package installed Maven',
+					jdk: 'OpenJDK 11',
+					options: [
+						findbugsPublisher(disabled: true),
+						spotbugsPublisher(disabled: true),
+						junitPublisher(disabled: true)]
+				) {
+					sh '''#!/bin/bash -e
+						cd "$WORKSPACE"
+						./build --clean --debug --spotbugs main-jenkins-gps
+					'''
+				}
+			}
+		}
+
+		stage('Code analysis') {
+			steps {
+				sh '''#!/bin/bash -e
+					cd "$WORKSPACE"
+					./ant cpd
+				'''
+			}
+		}
+	}
+
+	post {
+		always {
+			recordIssues tool: java(),
+				qualityGates: [
+					[threshold: 1, type: 'TOTAL_HIGH', unstable: true],
+					[threshold: 23, type: 'TOTAL_NORMAL', unstable: true],
+					[threshold: 1, type: 'TOTAL_LOW', unstable: true]
+				]
+			recordIssues tool: spotBugs(pattern: '**/target/spotbugsXml.xml'),
+				qualityGates: [
+					[threshold: 2, type: 'TOTAL_HIGH', unstable: true],
+					[threshold: 3238, type: 'TOTAL_NORMAL', unstable: true],
+					[threshold: 1, type: 'TOTAL_LOW', unstable: true]
+				]
+			recordIssues tool: cpd(pattern: '**/cpd/xml/cpd.xml'),
+				qualityGates: [
+					[threshold: 29, type: 'TOTAL_HIGH', unstable: true],
+					[threshold: 196, type: 'TOTAL_NORMAL', unstable: true],
+					[threshold: 477, type: 'TOTAL_LOW', unstable: true]
+				]
+		}
+		changed {
+			rocketSend channel: '#builds', message: "Build changed to ${currentBuild.result}: ${JOB_NAME} ${BUILD_URL}", rawMessage: true
+			script {
+				notifyEmail('DevelopersRecipientProvider')
+			}
+		}
+		unstable {
+			rocketSend channel: '#builds', emoji: ':rotating_light:', message: "Unstable: ${JOB_NAME} ${BUILD_URL}", rawMessage: true
+			script {
+				notifyEmail('DevelopersRecipientProvider')
+			}
+		}
+		failure {
+			rocketSend channel: '#builds', emoji: ':rotating_light:', message: "Failure: ${JOB_NAME} ${BUILD_URL}", rawMessage: true
+			script {
+				notifyEmail('DevelopersRecipientProvider')
+			}
+		}
+		cleanup {
+			cleanWs()
+		}
+	}
+}
+
+def notifyEmail(String recipientProvider) {
+	emailext subject: '$DEFAULT_SUBJECT',
+		body: '$DEFAULT_CONTENT',
+		recipientProviders: [
+			[$class: "$recipientProvider"]
+		],
+		replyTo: '$DEFAULT_REPLYTO',
+		to: '$DEFAULT_RECIPIENTS;'
+}
