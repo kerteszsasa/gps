@@ -17,7 +17,8 @@ pipeline {
 			steps {
 				withMaven(
 					maven: 'Package installed Maven',
-					jdk: 'OpenJDK 11',
+					jdk: 'Temurin 11',
+					globalMavenSettingsConfig: 'maven-idata-repository',
 					options: [
 						findbugsPublisher(disabled: true),
 						spotbugsPublisher(disabled: true),
@@ -52,14 +53,14 @@ pipeline {
 			recordIssues tool: spotBugs(pattern: '**/target/spotbugsXml.xml'),
 				qualityGates: [
 					[threshold: 2, type: 'TOTAL_HIGH', unstable: true],
-					[threshold: 3237, type: 'TOTAL_NORMAL', unstable: true],
+					[threshold: 3004, type: 'TOTAL_NORMAL', unstable: true],
 					[threshold: 1, type: 'TOTAL_LOW', unstable: true]
 				]
 			recordIssues tool: cpd(pattern: '**/cpd/xml/cpd.xml'),
 				qualityGates: [
 					[threshold: 29, type: 'TOTAL_HIGH', unstable: true],
-					[threshold: 196, type: 'TOTAL_NORMAL', unstable: true],
-					[threshold: 477, type: 'TOTAL_LOW', unstable: true]
+					[threshold: 194, type: 'TOTAL_NORMAL', unstable: true],
+					[threshold: 471, type: 'TOTAL_LOW', unstable: true]
 				]
 		}
 		changed {
@@ -95,3 +96,4 @@ def notifyEmail(String recipientProvider) {
 		replyTo: '$DEFAULT_REPLYTO',
 		to: '$DEFAULT_RECIPIENTS;'
 }
+
